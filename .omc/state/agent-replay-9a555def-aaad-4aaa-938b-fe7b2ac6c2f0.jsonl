@@ -1,0 +1,5 @@
+{"t":0,"agent":"adcf85d","agent_type":"unknown","event":"agent_stop","success":true}
+{"t":0,"agent":"system","event":"skill_invoked","skill_name":"superpowers:writing-plans"}
+{"t":0,"agent":"a9cdb39","agent_type":"unknown","event":"agent_stop","success":true}
+{"t":0,"agent":"system","event":"skill_invoked","skill_name":"superpowers:subagent-driven-development"}
+{"t":0,"agent":"a275815","agent_type":"general-purpose","event":"agent_start","parent_mode":"none"}

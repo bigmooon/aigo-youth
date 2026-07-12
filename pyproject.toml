@@ -1,0 +1,25 @@
+[project]
+name = "aigo-v2"
+version = "0.1.0"
+description = "임대차 계약서 위험 조항 탐지 시스템 (근거제시형)"
+requires-python = ">=3.12"
+dependencies = [
+  "langgraph>=0.2",
+  "langchain-openai>=0.2",
+  "langchain-core>=0.3",
+  "qdrant-client>=1.9",
+  "sentence-transformers>=3.0",
+  "pymupdf>=1.24",
+  "pydantic>=2.7",
+  "python-dotenv>=1.0",
+  "streamlit>=1.35",
+  "requests>=2.31",
+]
+
+[dependency-groups]
+dev = ["pytest>=8.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = ["integration: LLM 또는 벡터스토어가 필요한 테스트"]
