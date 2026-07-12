@@ -22,6 +22,17 @@ DEFAULT_SOURCES = [
 ]
 
 
+def _existing_sources(sources: list) -> list:
+  """존재하는 소스 파일만 반환. 누락 파일은 경고 후 건너뛴다."""
+  available = []
+  for loader, path in sources:
+    if Path(path).exists():
+      available.append((loader, path))
+    else:
+      print(f"[경고] {path} 없음 — 건너뜀 (scripts/sync_data.py로 생성 가능)")
+  return available
+
+
 def _parse_args() -> argparse.Namespace:
   parser = argparse.ArgumentParser(description="통합 법령 벡터스토어 빌드")
   parser.add_argument(
@@ -76,7 +87,11 @@ def main() -> None:
   args = _parse_args()
 
   if args.dry_run:
-    _dry_run(DEFAULT_SOURCES, args.limit)
+    sources = _existing_sources(DEFAULT_SOURCES)
+    if not sources:
+      print("[오류] 인덱싱할 소스가 없습니다.")
+      sys.exit(1)
+    _dry_run(sources, args.limit)
     return
 
   if args.reset:
@@ -101,6 +116,11 @@ def main() -> None:
     embedder = Embedder()
     store = QdrantStore(collection_name=args.collection, embedder=embedder)
 
+  sources = _existing_sources(DEFAULT_SOURCES)
+  if not sources:
+    print("[오류] 인덱싱할 소스가 없습니다.")
+    sys.exit(1)
+
   print(f"[시작] mode={store.mode} collection={args.collection} "
         f"batch_size={args.batch_size} limit={args.limit}")
 
@@ -108,7 +128,7 @@ def main() -> None:
     print(f"  [{doc_type}] +{batch_n} (누적 {total})")
 
   counts = build_index(
-    sources=DEFAULT_SOURCES,
+    sources=sources,
     store=store,
     batch_size=args.batch_size,
     limit_per_source=args.limit,
