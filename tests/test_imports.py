@@ -10,6 +10,7 @@ MODULES = [
   "src.vectordb.store",
   "src.ingest.chunker",
   "src.api.api",
+  "src.ui.components.uploader",
 ]
 
 @pytest.mark.parametrize("mod", MODULES)
