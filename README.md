@@ -13,6 +13,88 @@
 >
 > 본 프로젝트는 법률 자문이나 법적 판단을 제공하지 않습니다. 법령·판례·법령해석례를 바탕으로 정보를 안내하며, 구체적인 판단이 필요한 경우 전문가와 상담해야 합니다.
 
+## 프로젝트의 출발점 — AIGO v1
+
+AIGO-V2는 SK네트웍스 Family AI 캠프 24기 3차 팀 프로젝트 **“아이고~~ 청년!”**에서 시작했습니다. 당시에는 사용자가 특약이나 궁금한 상황을 직접 입력하면 법령·판례·법령해석례를 검색해 답하는 RAG 챗봇을 만들었습니다.
+
+| v1 팀원 | GitHub |
+|---|---|
+| 임정희 | [bigmooon](https://github.com/bigmooon) |
+| 정석원 | [JeongSW123](https://github.com/JeongSW123) |
+| 고아라 | [Akoh-0909](https://github.com/Akoh-0909) |
+| 김정현 | [Jeich-16](https://github.com/Jeich-16) |
+| 진세형 | [gugu-eightyone](https://github.com/gugu-eightyone) |
+
+### v1이 해결하려던 문제
+
+부동산 임대차 계약은 보증금, 특약, 계약 기간처럼 확인해야 할 내용이 많지만 사회초년생과 일반 임차인이 이를 혼자 파악하기는 어렵습니다. v1은 어려운 법률 용어를 몰라도 자연어로 질문하고, 검색된 공식 문서를 근거로 답변과 출처 링크를 받을 수 있도록 설계했습니다.
+
+- 특약 직접 입력 및 검토
+- 임대차 상황에 관한 자연어 질의응답
+- 법령·판례·법령해석례 기반 검색
+- 개인정보가 포함된 질문 필터링
+- 검색 근거와 원문 링크 제시
+
+### v1 구현 화면
+
+<img width="1200" alt="AIGO v1 Streamlit 질의응답 화면" src="https://github.com/user-attachments/assets/0ea04e6d-c6c9-4bdb-a983-16cf2ef4826b" />
+
+### v1에서 구축한 법률 데이터
+
+법제처 국가법령정보센터의 법령·판례·법령해석례를 수집하고, 임대차 도메인 키워드로 선별한 뒤 검색 단위로 정제했습니다. 아래 수치는 **v1 팀 프로젝트 당시의 전처리 결과**이며 현재 v2의 성능 지표는 아닙니다.
+
+| 데이터 | 수집 원본 | 정제·청킹 결과 | 청킹 전략 |
+|---|---:|---:|---|
+| 법령 | 1,707건 | 105,501 청크 | RecursiveCharacterTextSplitter 500/50 |
+| 판례 | 1,717건 | 30,035 청크 | RecursiveCharacterTextSplitter 500/50 |
+| 법령해석례 | 369건 | 3,864 청크 | RecursiveCharacterTextSplitter 400/60 |
+
+전처리 과정에서는 문서 식별자와 날짜 등 검색·추적에 필요한 값은 메타데이터로 보존하고, 본문과 중복되거나 결측률이 높은 컬럼은 제외했습니다. 판례는 사건번호 결측, 중복 사건, 본문이 없는 문서를 제거했고 법령해석례는 중복 행을 제거했습니다.
+
+### v1에서 확인한 개선 과제
+
+1. 긴 질문을 그대로 검색하면 문서 유사도가 낮아지는 문제가 있었습니다. 이를 개선하기 위해 `query_summary` 노드를 추가해 검색용 핵심 질의를 분리했습니다.
+2. 생성 답변만으로는 근거 문서의 직접 링크를 안정적으로 제공하기 어려웠습니다. `resolve_citations` 노드를 추가해 문서 메타데이터로 출처 링크를 조립했습니다.
+3. PDF 업로드 UI는 있었지만 실제 문서 입력과 연결되지 않았습니다. v2에서 텍스트 기반 PDF 추출과 입력 흐름을 구현했습니다.
+
+<details>
+<summary><strong>v1 설계 산출물 보기</strong></summary>
+
+#### 임베딩 모델 비교
+
+<img width="727" alt="v1 임베딩 모델 평가 결과" src="https://github.com/user-attachments/assets/0992c225-4e3d-412f-a826-77d79185a7ee" />
+
+#### 시스템 아키텍처
+
+<img width="1165" alt="v1 시스템 아키텍처" src="https://github.com/user-attachments/assets/4bae3b13-70de-441b-8f33-d2091abea2f0" />
+
+#### WBS
+
+<img width="1014" alt="v1 WBS" src="https://github.com/user-attachments/assets/4a09d025-1e4e-4577-8ea0-76b699bc52e5" />
+
+#### 요구사항 명세서
+
+<img width="1234" alt="v1 요구사항 명세서" src="https://github.com/user-attachments/assets/20a1df99-1781-4323-8fdf-7ac979f26ec8" />
+
+</details>
+
+원본의 전체 조사·전처리 기록과 팀 회고는 [`aigo-ai` README](https://github.com/bigmooon/aigo-ai/blob/main/README.md)에서 확인할 수 있습니다.
+
+## v1 → v2: 무엇이 달라졌나
+
+| 구분 | v1 팀 프로젝트 | v2 개인 프로젝트 |
+|---|---|---|
+| 핵심 문제 | 사용자가 질문하면 근거 기반으로 답변 | 사용자가 질문을 만들기 전에 계약서에서 확인할 조항 발견 |
+| 입력 | 특약·상황을 텍스트로 입력 | 텍스트 질문 + 계약서 PDF |
+| 처리 | 질문 중심 RAG Q&A | 현재 Q&A, 향후 조항 분해·근거 매칭으로 확장 |
+| 출력 | 대화형 답변과 참고 링크 | 현재 근거 기반 답변, 향후 조항별 발견 리포트 |
+| 인용 | LLM 답변 이후 링크 보완 | 검색 메타데이터로 출처를 결정론적으로 조립 |
+| 품질 검증 | 팀 테스트 시나리오와 실험 결과 | 기본 CI 구현, 골든셋·정량 평가는 로드맵 |
+| 책임 범위 | 불리한 조항 안내 | 위험 등급을 단정하지 않고 검증 가능한 근거 제시 |
+| 나의 확장 범위 | 팀원으로 공동 개발 | 문제 재정의, PDF 입력, 실행 환경, CI·평가 구조 재설계 |
+
+v1은 “무엇을 물어볼지 아는 사용자”에게 유용했지만, 실제 임차인은 어떤 문구를 질문해야 하는지 모를 수 있습니다. 이 한계를 해결하기 위해 v2는 **질문에 답하는 챗봇에서 계약서 전체를 먼저 살펴보는 시스템**으로 방향을 바꿨습니다.
+
 ## 해결하려는 문제
 
 임차인은 계약서에 어떤 위험이 숨어 있는지 알기 어렵기 때문에 질문 자체를 만들지 못할 수 있습니다. AIGO-V2는 단순히 질문에 답하는 것을 넘어 다음 흐름을 목표로 합니다.
@@ -174,28 +256,6 @@ uv run pytest -m integration -v
 
 비통합 테스트는 모듈 import와 기본 실행 환경을 검증합니다. 이는 모델의 답변 정확도나 탐지 성능을 의미하지 않습니다. 모델 품질 수치는 골든셋과 평가 하네스가 구현된 뒤 별도로 공개할 예정입니다.
 
-## v1에서 가져온 자산과 배운 점
-
-이 프로젝트는 SK네트웍스 Family AI 캠프 24기 3차 팀 프로젝트 [`aigo-ai`](https://github.com/bigmooon/aigo-ai)를 기반으로 합니다.
-
-v1에서 이어받은 내용:
-
-- 법령·판례·법령해석례 수집 및 전처리 경험
-- KURE-v1 임베딩과 Qdrant 기반 검색
-- LangGraph Q&A 흐름
-- 긴 질문을 위한 `query_summary`
-- 출처 링크를 보완한 `resolve_citations`
-
-v2에서 개인적으로 재설계한 내용:
-
-- 질문 중심 Q&A에서 계약서 전체 분석으로 문제 정의 전환
-- 법적 판단 대신 근거 제시를 중심으로 책임 범위 설정
-- PDF 입력과 개인 프로젝트용 Streamlit UI 구성
-- 자동 테스트와 GitHub Actions 기반 최소 회귀 검증 도입
-- 골든셋과 정량 평가를 전제로 한 탐지 파이프라인 설계
-
-기존 프로젝트의 시장 조사, 데이터 전처리 과정, 모델 비교와 팀 결과는 [v1 README](https://github.com/bigmooon/aigo-ai/blob/main/README.md)에서 확인할 수 있습니다. v1의 화면과 평가 결과는 v2의 현재 성능으로 사용하지 않습니다.
-
 ## 로드맵
 
 - [x] v1 Q&A 파이프라인 및 데이터 구조 이식
@@ -209,16 +269,6 @@ v2에서 개인적으로 재설계한 내용:
 - [ ] 배포 및 사용자 피드백 수집
 
 상세 설계는 [`docs/superpowers/specs/2026-07-06-aigo-v2-design.md`](docs/superpowers/specs/2026-07-06-aigo-v2-design.md), 구현 계획은 [`docs/superpowers/plans/2026-07-12-p0-p1-implementation.md`](docs/superpowers/plans/2026-07-12-p0-p1-implementation.md)에서 확인할 수 있습니다.
-
-## 원본 프로젝트 크레딧
-
-v1 팀 프로젝트 참여자:
-
-- [임정희](https://github.com/bigmooon)
-- [정석원](https://github.com/JeongSW123)
-- [고아라](https://github.com/Akoh-0909)
-- [김정현](https://github.com/Jeich-16)
-- [진세형](https://github.com/gugu-eightyone)
 
 ## License
 
